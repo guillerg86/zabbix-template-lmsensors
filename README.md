@@ -1,4 +1,4 @@
-# zabbix-lm-sensors
+# LM-sensors Zabbix Template
 
 Template for monitoring Intel / AMD Architecture x86 or x64 temperature with Zabbix.
 
@@ -118,7 +118,7 @@ The template comes with one item and one discovery rule.
 
 **CPU {#INDEX} temperature equal or greater than {#TEMP_HIGH}ºC**
 
-When the temperature reaches the high value
+When the temperature reaches the high value. This trigger has dependency on the next.
 
 **CPU {#INDEX} temperature equal or greater than {#TEMP_CRITICAL}ºC**
 
