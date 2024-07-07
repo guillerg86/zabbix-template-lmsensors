@@ -1,0 +1,85 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226338
+      name: Templates
+  templates:
+    - uuid: dfb11a023fc14951abe65e79bb604938
+      template: 'Linux x86x64 Temperature Template'
+      name: 'Linux x86x64 Temperature Template'
+      description: |
+        Author: Guille Rodriguez
+        Website: https://github.com/guillerg86
+        
+        Required: apt install sensors
+      groups:
+        - name: Templates
+      items:
+        - uuid: fbe7d0116faf400cac16fdd5bc3feb5d
+          name: 'LMSensors Zabbix raw item'
+          key: sensors.cores.raw
+          history: 1h
+          trends: '0'
+          value_type: TEXT
+          tags:
+            - tag: Application
+              value: 'Zabbix raw items'
+      discovery_rules:
+        - uuid: e220bc94d75644fc8d60253e51433918
+          name: 'Discover cores'
+          key: sensors.cores.discover
+          delay: 1h
+          item_prototypes:
+            - uuid: 817b622801004f0c880574390028cc13
+              name: 'CPU Socket {#SOCKET} Core {#INDEX} Temperature'
+              type: DEPENDENT
+              key: 'sensors.cores.temp_core[{#INDEX}]'
+              delay: '0'
+              history: 7d
+              value_type: FLOAT
+              units: ºC
+              description: 'Raw data {#CORE.ID} of socket {#SOCKET}'
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[{#INDEX}].core_temp_now'
+              master_item:
+                key: sensors.cores.raw
+              tags:
+                - tag: Application
+                  value: CPU
+                - tag: Application
+                  value: 'CPU Core {#INDEX} Socket {#SOCKET}'
+                - tag: Application
+                  value: 'Socket {#SOCKET}'
+                - tag: Application
+                  value: Temperature
+                - tag: Application
+                  value: 'Zabbix raw items'
+              trigger_prototypes:
+                - uuid: e0fc4d75840243d8baffaeb0aa18739e
+                  expression: 'last(/Linux x86x64 Temperature Template/sensors.cores.temp_core[{#INDEX}])>={#TEMP_CRITICAL}'
+                  name: 'CPU {#INDEX} temp equal or greater than {#TEMP_CRITICAL}ºC'
+                  opdata: '{ITEM.LASTVALUE}'
+                  priority: DISASTER
+                  description: 'Core {#CORE.ID} socket {#SOCKET} equal or greater than critical {#TEMP_CRITICAL}ºC'
+                - uuid: ec872435c6454e638fa31ef1ddc87648
+                  expression: 'last(/Linux x86x64 Temperature Template/sensors.cores.temp_core[{#INDEX}])>={#TEMP_HIGH}'
+                  name: 'CPU {#INDEX} temperature equal or greater than {#TEMP_HIGH}ºC'
+                  opdata: '{ITEM.LASTVALUE}'
+                  priority: HIGH
+                  description: 'Core {#CORE.ID} socket {#SOCKET} equal or greater than high {#TEMP_HIGH}ºC'
+                  dependencies:
+                    - name: 'CPU {#INDEX} temp equal or greater than {#TEMP_CRITICAL}ºC'
+                      expression: 'last(/Linux x86x64 Temperature Template/sensors.cores.temp_core[{#INDEX}])>={#TEMP_CRITICAL}'
+          lld_macro_paths:
+            - lld_macro: '{#CORE.ID}'
+              path: $.core_id
+            - lld_macro: '{#INDEX}'
+              path: $.index
+            - lld_macro: '{#SOCKET}'
+              path: $.socket
+            - lld_macro: '{#TEMP_CRITICAL}'
+              path: $.core_temp_critical
+            - lld_macro: '{#TEMP_HIGH}'
+              path: $.core_temp_high
