@@ -1,4 +1,5 @@
 import subprocess
+import argparse
 import re
 import json
 import enum
@@ -35,7 +36,7 @@ class LinuxTemps(object):
             if self.__readmode == ReadMode.package_start:
                 self.__package_pos = int(re.search("Package id (\d+):$",line).group(1))
                 if len(self.__package) <= self.__package_pos:
-                    self.__package.append({'socket_number':self.__package_pos, 'cores':[]})
+                    self.__package.append({'socket_number':self.__package_pos, 'socket_temp_now':0, 'socket_temp_high':0,'socket_temp_critical':0, 'cores':[]})
                     self.__readmode = ReadMode.package_data
                     self.__core_pos = 0
                     continue
@@ -56,7 +57,7 @@ class LinuxTemps(object):
             if self.__readmode == ReadMode.core_start:
                 self.__core_pos = int((re.search("Core (\d+):$",line)).group(1))
                 if len(self.__package[self.__package_pos]['cores']) <= self.__core_pos:
-                    self.__package[self.__package_pos]['cores'].append({'core_id':self.__core_pos})
+                    self.__package[self.__package_pos]['cores'].append({'core_id':self.__core_pos, 'core_temp_now':0, 'core_temp_high':0, 'core_temp_critical':0 })
                     self.__readmode = ReadMode.core_data
                     continue
             
@@ -77,15 +78,32 @@ class LinuxTemps(object):
         return self.__package
 
 
-s = LinuxTemps()
-cores = []
-i = 0
-for package in s.parse_output():
-  for core in package['cores']:
-    core['socket'] = package['socket_number']
-    core['index'] = i
-    cores.append(core)
-    i += 1
+
+def configure_parser():
+    parser = argparse.ArgumentParser(
+        prog="LMSensors Temp Parser", 
+        description="Get the lmsensor's output of x86x64 architecture processor and return a JSON"
+    )
+    parser.add_argument("--set-high-temp",type=float,required=False)
+    parser.add_argument("--set-critical-temp",type=float,required=False)
+    args = parser.parse_args()
+    return args
 
 
-print(json.dumps(cores))
+if __name__ == "__main__":    
+    args = configure_parser()
+    s = LinuxTemps()
+    cores = []
+    i = 0
+    for package in s.parse_output():
+        for core in package['cores']:
+            core['socket'] = package['socket_number']
+            core['index'] = i
+            cores.append(core)
+            if args.set_high_temp:
+                core['core_temp_high'] = args.set_high_temp
+            if args.set_critical_temp:
+                core['core_temp_critical'] = args.set_critical_temp
+            i += 1
+
+    print(json.dumps(cores))

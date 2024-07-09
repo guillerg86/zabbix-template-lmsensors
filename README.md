@@ -12,7 +12,7 @@ Template for monitoring Intel / AMD Architecture x86 or x64 temperature with Zab
 - [x] Python3 installed
 - [x] Zabbix Agent installed (tested with Zabbix Agent 2)
 
-## Instalation
+## Install process
 
 Create a scripts directory on your agent config
 
@@ -105,6 +105,73 @@ Check the results. For an Intel i5 10500T the output is
   }
 ]
 ```
+
+Some CPU have the same value for HIGH and CRITICAL temp, so if you want to force another temps you can pass this parameters
+
+|Parameter|Required|Description|
+|-|-|-|
+|--set-high-temp|Optional|Set the value for HIGH temp|
+|--set-critical-temp|Optional|Set the value for CRITICAL temp|
+
+```
+/usr/bin/python3 -B /etc/zabbix/scripts/zbix-lmsensors.py --set-high-temp 70 --set-critical-temp 95
+```
+
+Will overwrite the json output.
+
+```
+[
+  {
+    "core_id": 0,
+    "core_temp_now": 60,
+    "core_temp_high": 70,
+    "core_temp_critical": 95,
+    "socket": 0,
+    "index": 0
+  },
+  {
+    "core_id": 1,
+    "core_temp_now": 60,
+    "core_temp_high": 70,
+    "core_temp_critical": 95,
+    "socket": 0,
+    "index": 1
+  },
+  {
+    "core_id": 2,
+    "core_temp_now": 64,
+    "core_temp_high": 70,
+    "core_temp_critical": 95,
+    "socket": 0,
+    "index": 2
+  },
+  {
+    "core_id": 3,
+    "core_temp_now": 59,
+    "core_temp_high": 70,
+    "core_temp_critical": 95,
+    "socket": 0,
+    "index": 3
+  },
+  {
+    "core_id": 4,
+    "core_temp_now": 64,
+    "core_temp_high": 70,
+    "core_temp_critical": 95,
+    "socket": 0,
+    "index": 4
+  },
+  {
+    "core_id": 5,
+    "core_temp_now": 57.85,
+    "core_temp_high": 70,
+    "core_temp_critical": 95,
+    "socket": 0,
+    "index": 5
+  }
+]
+```
+The script doesn't check if the high value is greater than critical, or if some of them is negative value... So it's in your hand to set a good values. Zabbix will use this fields to set the trigger thresholds.
 
 ## Template
 
